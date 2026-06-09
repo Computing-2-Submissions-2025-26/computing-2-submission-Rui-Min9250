@@ -1,0 +1,634 @@
+:root {
+  --ink: #392f2f;
+  --muted: #7d6862;
+  --rose: #ff8fab;
+  --rose-soft: #ffe1e9;
+  --cream: #fff3c9;
+  --butter: #ffd76d;
+  --mint: #a8dfc2;
+  --blue: #8fc7ff;
+  --tile-a: #fff9e8;
+  --tile-b: #ffeef3;
+  --shadow: 0 20px 60px rgba(129, 76, 72, 0.18);
+  --board-size: min(calc(100vh - 180px), 470px);
+  --play-height: min(calc(100vh - 150px), 500px);
+  color: var(--ink);
+  font-family: "Nunito", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(255, 248, 239, 0.18), rgba(255, 248, 239, 0.18)),
+    url("assets/game_background.png") center / cover no-repeat,
+    #fff3df;
+}
+
+button {
+  color: inherit;
+  font: inherit;
+}
+
+.game-shell {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(430px, 560px) minmax(180px, 220px);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 24px;
+  justify-content: center;
+  width: min(1096px, calc(100vw - 28px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 14px 0;
+}
+
+.title-bar,
+.status-strip,
+.play-area {
+  display: grid;
+  gap: 16px;
+}
+
+.title-bar {
+  grid-column: 1 / -1;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+
+.eyebrow,
+.label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  color: #f0648d;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(2rem, 4.6vw, 3.25rem);
+  line-height: 0.9;
+  text-shadow: 0 5px 0 rgba(255, 255, 255, 0.85);
+}
+
+.icon-button,
+.icon-text-button,
+.modal-actions button {
+  border: 0;
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 12px 15px;
+  box-shadow: 0 10px 24px rgba(57, 47, 47, 0.18);
+}
+
+.top-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.icon-button {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  padding: 0;
+  font-size: 1.25rem;
+}
+
+.icon-text-button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-strip {
+  grid-column: 1;
+  grid-row: 2;
+  grid-template-columns: 1fr;
+  align-content: space-between;
+  gap: 12px;
+  height: var(--play-height);
+  margin-top: 0;
+}
+
+.cake-panel,
+.level-panel,
+.level-note,
+.side-panel > section {
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow);
+}
+
+.cake-panel {
+  min-width: 0;
+  padding: 12px;
+}
+
+.cake-heading {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.cake-heading > div {
+  min-width: 0;
+}
+
+.chef-summary {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cake-icon {
+  display: grid;
+  width: 160px;
+  height: 160px;
+  place-items: center;
+  border-radius: 0;
+  background: transparent;
+  font-size: 4rem;
+  overflow: visible;
+}
+
+.cake-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.chef-card h2 {
+  margin: 2px 0 0;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 1.32rem;
+  line-height: 1;
+}
+
+.cake-panel h2 {
+  max-width: 100%;
+  margin: 2px 0 0;
+  overflow: hidden;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ingredient-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ingredient-list li {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 32px;
+  border: 1px solid rgba(57, 47, 47, 0.08);
+  border-radius: 8px;
+  background: white;
+  padding: 6px 8px;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.ingredient-list .done {
+  background: #e8f8ef;
+  color: #277750;
+}
+
+.level-panel {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  text-align: center;
+}
+
+.level-panel strong {
+  display: block;
+  margin-top: 2px;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.time-low {
+  color: #de3152;
+  animation: tickPulse 0.5s infinite alternate;
+}
+
+.play-area {
+  display: contents;
+  margin-top: 0;
+  align-items: start;
+}
+
+.kitchen-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: center;
+  width: 100%;
+  height: var(--play-height);
+  align-self: start;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.92);
+  border-radius: 8px;
+  background: #fff7e0;
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+
+.kitchen-grid {
+  display: grid;
+  width: min(100%, var(--board-size));
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border: 2px solid rgba(57, 47, 47, 0.1);
+  border-radius: 8px;
+  background: #fff9e8;
+  overflow: hidden;
+}
+
+.tile {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  border: 1px solid rgba(119, 89, 78, 0.08);
+  background: var(--tile-a);
+  font-size: clamp(0.9rem, calc(42vw / var(--cols)), 2rem);
+}
+
+.tile.tile-b {
+  background: var(--tile-b);
+}
+
+.tile.obstacle {
+  background: rgba(180, 137, 101, 0.36);
+}
+
+.obstacle-image {
+  display: block;
+  width: 110%;
+  height: 110%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.tile.ingredient-new {
+  animation: popIn 0.24s ease-out;
+}
+
+.cat-token {
+  display: grid;
+  width: 116%;
+  height: 116%;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  transform: translateY(-2px);
+  animation: catHop 0.18s ease-out;
+}
+
+.cat-token img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+}
+
+.cat-token.zaozao {
+  background: transparent;
+}
+
+.side-panel {
+  display: grid;
+  grid-column: 3;
+  grid-row: 2;
+  align-content: space-between;
+  gap: 12px;
+  height: var(--play-height);
+}
+
+.side-panel > section {
+  padding: 10px;
+}
+
+.chef-avatar {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  font-size: 1.6rem;
+  overflow: hidden;
+}
+
+.chef-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+}
+
+.chef-card p:last-child,
+.tiny-copy,
+.level-note span {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.key-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 36px);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+kbd {
+  display: grid;
+  width: 36px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(57, 47, 47, 0.14);
+  border-radius: 8px;
+  background: white;
+  box-shadow: inset 0 -3px 0 rgba(57, 47, 47, 0.08);
+  font-weight: 900;
+}
+
+.level-note {
+  border-color: rgba(168, 223, 194, 0.85);
+  background: rgba(236, 255, 244, 0.82);
+  padding: 10px;
+}
+
+.level-note p {
+  margin-bottom: 4px;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(75, 48, 53, 0.42);
+  backdrop-filter: blur(7px);
+}
+
+.modal-backdrop.is-open {
+  display: flex;
+}
+
+.modal {
+  width: min(680px, 100%);
+  border: 3px solid white;
+  border-radius: 8px;
+  background: #fffaf0;
+  padding: 24px;
+  box-shadow: 0 24px 80px rgba(57, 47, 47, 0.28);
+  text-align: center;
+}
+
+.modal h2 {
+  margin: 4px 0 18px;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.chef-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.chef-option {
+  display: grid;
+  gap: 7px;
+  justify-items: center;
+  min-height: 230px;
+  border: 2px solid rgba(240, 100, 141, 0.22);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  padding: 18px;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.chef-option:hover,
+.chef-option:focus-visible {
+  border-color: var(--rose);
+  box-shadow: 0 16px 34px rgba(240, 100, 141, 0.2);
+  transform: translateY(-2px);
+}
+
+.big-cat {
+  display: grid;
+  width: 150px;
+  height: 150px;
+  place-items: center;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 3.2rem;
+}
+
+.chef-photo {
+  display: block;
+  object-fit: cover;
+  object-position: center 22%;
+  border: 0;
+  box-shadow: 0 10px 24px rgba(57, 47, 47, 0.12);
+}
+
+.orange-cat {
+  background: var(--cream);
+}
+
+.chef-option strong {
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 1.45rem;
+}
+
+.chef-option small {
+  border-radius: 999px;
+  background: var(--rose-soft);
+  color: #c74369;
+  padding: 5px 10px;
+  font-weight: 900;
+}
+
+.chef-option span:last-child,
+.result-modal p {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.result-badge {
+  display: grid;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 14px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  font-size: 3rem;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.modal-actions button.secondary {
+  background: white;
+  color: var(--ink);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+}
+
+@keyframes catHop {
+  from {
+    transform: translateY(5px) scale(0.92);
+  }
+}
+
+@keyframes tickPulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@media (max-width: 900px) {
+  body {
+    overflow: auto;
+  }
+
+  .game-shell {
+    display: block;
+    min-height: auto;
+  }
+
+  .title-bar,
+  .status-strip,
+  .play-area {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .status-strip {
+    height: auto;
+    align-content: normal;
+    margin-top: 18px;
+  }
+
+  .play-area {
+    margin-top: 16px;
+  }
+
+  .kitchen-wrap,
+  .side-panel {
+    grid-column: auto;
+    grid-row: auto;
+    height: auto;
+    align-content: normal;
+  }
+
+  .kitchen-grid {
+    width: min(100%, 470px);
+  }
+
+  .title-bar {
+    align-items: start;
+  }
+
+  .level-panel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .side-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .game-shell {
+    width: min(100vw - 18px, 1180px);
+    padding: 12px 0;
+  }
+
+  .icon-text-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .side-panel,
+  .chef-options {
+    grid-template-columns: 1fr;
+  }
+
+  .modal {
+    padding: 18px;
+  }
+
+  .tile {
+    font-size: clamp(0.75rem, calc(58vw / var(--cols)), 1.55rem);
+  }
+}
