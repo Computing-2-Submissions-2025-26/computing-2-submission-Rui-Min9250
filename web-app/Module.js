@@ -21,8 +21,8 @@ const CatCakeKitchen = Object.create(null);
  * @property {number} level Human-readable level number.
  * @property {string} name Level name shown in the UI.
  * @property {number} n Grid size; the board is n by n.
- * @property {number} cakesRequired Number of cakes needed to complete the level.
- * @property {number} ingredientsPerCake Number of ingredients used from each cake recipe.
+ * @property {number} cakesRequired Cake orders needed to complete the level.
+ * @property {number} ingredientsPerCake Ingredients used from each recipe.
  * @property {number} obstacles Number of obstacles to place on the grid.
  * @property {number} timeLimit Base time limit in seconds.
  */
@@ -43,7 +43,7 @@ const CatCakeKitchen = Object.create(null);
  * @property {string} name Display name.
  * @property {string} skill Short description of the chef skill.
  * @property {number} timeBonus Extra seconds added to the level timer.
- * @property {boolean} areaCollect Whether the chef collects surrounding ingredients.
+ * @property {boolean} areaCollect Whether nearby ingredients are collected.
  */
 
 /**
@@ -55,7 +55,7 @@ const CatCakeKitchen = Object.create(null);
  * @property {CatCakeKitchen.Cake[]} cakeQueue Cake orders for this level.
  * @property {number} currentCakeIndex Current cake index in the queue.
  * @property {Set<string>} collected Ingredients collected for the current cake.
- * @property {Map<string, string>} ingredientsOnGrid Grid key to ingredient name.
+ * @property {Map<string, string>} ingredientsOnGrid Grid key to ingredient.
  * @property {Map<string, string>} obstacles Grid key to obstacle image or id.
  * @property {CatCakeKitchen.Position} cat Current cat position.
  * @property {number} timeLeft Remaining seconds.
@@ -70,7 +70,7 @@ const CatCakeKitchen = Object.create(null);
  * @returns {string} A key representing the grid position.
  */
 CatCakeKitchen.keyFor = function (row, col) {
-    return `${row},${col}`;
+    return row + "," + col;
 };
 
 /**
@@ -101,10 +101,9 @@ CatCakeKitchen.isInsideGrid = function (position, level) {
 CatCakeKitchen.buildCakeQueue = function (cakes, level) {
     return Array.from({length: level.cakesRequired}, function (_, index) {
         const base = cakes[(level.level + index - 1) % cakes.length];
-        return {
-            ...base,
+        return Object.assign({}, base, {
             ingredients: base.ingredients.slice(0, level.ingredientsPerCake)
-        };
+        });
     });
 };
 
@@ -119,8 +118,8 @@ CatCakeKitchen.buildCakeQueue = function (cakes, level) {
  */
 CatCakeKitchen.createGame = function (level, chef, cakes) {
     return {
-        level,
-        chef,
+        level: level,
+        chef: chef,
         cakeQueue: CatCakeKitchen.buildCakeQueue(cakes, level),
         currentCakeIndex: 0,
         collected: new Set(),
@@ -141,7 +140,10 @@ CatCakeKitchen.createGame = function (level, chef, cakes) {
 CatCakeKitchen.getReachableTiles = function (state) {
     const startKey = CatCakeKitchen.keyFor(state.cat.row, state.cat.col);
     const reachable = new Set([startKey]);
-    const queue = [{...state.cat}];
+    const queue = [{
+        row: state.cat.row,
+        col: state.cat.col
+    }];
 
     while (queue.length > 0) {
         const position = queue.shift();
@@ -176,7 +178,9 @@ CatCakeKitchen.getReachableTiles = function (state) {
 CatCakeKitchen.canReachAllIngredients = function (state) {
     const reachable = CatCakeKitchen.getReachableTiles(state);
     return Array.from(state.ingredientsOnGrid.keys()).every(
-        (key) => reachable.has(key)
+        function (key) {
+            return reachable.has(key);
+        }
     );
 };
 
@@ -202,10 +206,9 @@ CatCakeKitchen.moveCat = function (state, rowDelta, colDelta) {
     if (state.obstacles.has(CatCakeKitchen.keyFor(next.row, next.col))) {
         return state;
     }
-    return {
-        ...state,
+    return Object.assign({}, state, {
         cat: next
-    };
+    });
 };
 
 /**
@@ -215,12 +218,15 @@ CatCakeKitchen.moveCat = function (state, rowDelta, colDelta) {
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} state Current game state.
- * @returns {CatCakeKitchen.GameState} Updated state after collecting ingredients.
+ * @returns {CatCakeKitchen.GameState} State after collecting.
  */
 CatCakeKitchen.collectIngredients = function (state) {
     const collected = new Set(state.collected);
     const ingredientsOnGrid = new Map(state.ingredientsOnGrid);
-    const spots = [{...state.cat}];
+    const spots = [{
+        row: state.cat.row,
+        col: state.cat.col
+    }];
 
     if (state.chef.areaCollect) {
         for (let row = state.cat.row - 1; row <= state.cat.row + 1; row += 1) {
@@ -229,7 +235,10 @@ CatCakeKitchen.collectIngredients = function (state) {
                 col <= state.cat.col + 1;
                 col += 1
             ) {
-                spots.push({row, col});
+                spots.push({
+                    row: row,
+                    col: col
+                });
             }
         }
     }
@@ -244,11 +253,10 @@ CatCakeKitchen.collectIngredients = function (state) {
         ingredientsOnGrid.delete(key);
     });
 
-    return {
-        ...state,
-        collected,
-        ingredientsOnGrid
-    };
+    return Object.assign({}, state, {
+        collected: collected,
+        ingredientsOnGrid: ingredientsOnGrid
+    });
 };
 
 /**
@@ -260,7 +268,9 @@ CatCakeKitchen.collectIngredients = function (state) {
  * @returns {boolean} True when the cake is complete.
  */
 CatCakeKitchen.isCakeComplete = function (cake, collected) {
-    return cake.ingredients.every((ingredient) => collected.has(ingredient));
+    return cake.ingredients.every(function (ingredient) {
+        return collected.has(ingredient);
+    });
 };
 
 /**

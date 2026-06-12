@@ -18,8 +18,8 @@ import CatCakeKitchenModule from "./Module.js";
  * @property {number} level - Human-readable level number.
  * @property {string} name - Level name shown in the UI.
  * @property {number} n - Grid size; the board is n by n.
- * @property {number} cakesRequired - Number of cakes needed to complete the level.
- * @property {number} ingredientsPerCake - Number of ingredients used from each cake recipe.
+ * @property {number} cakesRequired - Cake orders needed for the level.
+ * @property {number} ingredientsPerCake - Ingredients used from each recipe.
  * @property {number} obstacles - Number of obstacles to place on the grid.
  * @property {number} timeLimit - Base time limit in seconds.
  */
@@ -33,7 +33,7 @@ import CatCakeKitchenModule from "./Module.js";
  * @property {string} photo - Portrait image used in the UI.
  * @property {string} moveImage - Image used for the moving cat token.
  * @property {number} timeBonus - Extra seconds added to the level timer.
- * @property {boolean} areaCollect - Whether the chef collects surrounding ingredients.
+ * @property {boolean} areaCollect - Whether nearby ingredients are collected.
  */
 
 /**
@@ -49,7 +49,7 @@ import CatCakeKitchenModule from "./Module.js";
  * @typedef {Object} CatCakeKitchen.ResultAction
  * @property {string} label - Button text.
  * @property {Function} onClick - Handler run when the button is clicked.
- * @property {boolean} [secondary] - Whether the button should use the secondary style.
+ * @property {boolean} [secondary] - Whether the secondary style is used.
  */
 
 /**
@@ -59,9 +59,9 @@ import CatCakeKitchenModule from "./Module.js";
  * @property {number} levelIndex - Current index in the levels array.
  * @property {CatCakeKitchen.Cake[]} cakeQueue - Cakes required for this level.
  * @property {number} currentCakeIndex - Current cake index in the queue.
- * @property {Set<string>} collected - Ingredients collected for the current cake.
- * @property {Map<string, string>} ingredientsOnGrid - Grid key to ingredient name.
- * @property {Set<string>} animatedIngredients - Grid keys that already played the pop animation.
+ * @property {Set<string>} collected - Current cake ingredients collected.
+ * @property {Map<string, string>} ingredientsOnGrid - Grid key to ingredient.
+ * @property {Set<string>} animatedIngredients - Keys already animated.
  * @property {Map<string, string>} obstacles - Grid key to obstacle image path.
  * @property {CatCakeKitchen.Position} cat - Current cat position.
  * @property {number} timeLeft - Remaining seconds in the current level.
@@ -79,7 +79,7 @@ const levels = [
     cakesRequired: 1,
     ingredientsPerCake: 4,
     obstacles: 6,
-    timeLimit: 30,
+    timeLimit: 30
   },
   {
     level: 2,
@@ -88,7 +88,7 @@ const levels = [
     cakesRequired: 1,
     ingredientsPerCake: 4,
     obstacles: 6,
-    timeLimit: 30,
+    timeLimit: 30
   },
   {
     level: 3,
@@ -97,7 +97,7 @@ const levels = [
     cakesRequired: 2,
     ingredientsPerCake: 4,
     obstacles: 6,
-    timeLimit: 40,
+    timeLimit: 40
   },
   {
     level: 4,
@@ -106,7 +106,7 @@ const levels = [
     cakesRequired: 2,
     ingredientsPerCake: 5,
     obstacles: 6,
-    timeLimit: 45,
+    timeLimit: 45
   },
   {
     level: 5,
@@ -115,7 +115,7 @@ const levels = [
     cakesRequired: 2,
     ingredientsPerCake: 5,
     obstacles: 6,
-    timeLimit: 50,
+    timeLimit: 50
   },
   {
     level: 6,
@@ -124,7 +124,7 @@ const levels = [
     cakesRequired: 2,
     ingredientsPerCake: 5,
     obstacles: 9,
-    timeLimit: 55,
+    timeLimit: 55
   },
   {
     level: 7,
@@ -133,7 +133,7 @@ const levels = [
     cakesRequired: 2,
     ingredientsPerCake: 5,
     obstacles: 9,
-    timeLimit: 60,
+    timeLimit: 60
   },
   {
     level: 8,
@@ -142,7 +142,7 @@ const levels = [
     cakesRequired: 3,
     ingredientsPerCake: 5,
     obstacles: 9,
-    timeLimit: 70,
+    timeLimit: 70
   },
   {
     level: 9,
@@ -151,7 +151,7 @@ const levels = [
     cakesRequired: 3,
     ingredientsPerCake: 5,
     obstacles: 12,
-    timeLimit: 80,
+    timeLimit: 80
   },
   {
     level: 10,
@@ -160,8 +160,8 @@ const levels = [
     cakesRequired: 3,
     ingredientsPerCake: 5,
     obstacles: 12,
-    timeLimit: 90,
-  },
+    timeLimit: 90
+  }
 ];
 
 /** @type {Object.<string, CatCakeKitchen.Chef>} */
@@ -169,37 +169,121 @@ const chefs = {
   heizi: {
     name: "黑子 Heizi",
     skill: "Time Bonus",
-    avatar: "🐈‍⬛",
+    avatar: "H",
     photo: "assets/heizi_IDphoto.png",
     moveImage: "assets/Heizi_Move.png",
     timeBonus: 10,
-    areaCollect: false,
+    areaCollect: false
   },
   zaozao: {
     name: "早早 Zaozao",
     skill: "Area Collect",
-    avatar: "🐈",
+    avatar: "Z",
     photo: "assets/Zaozao_IDphoto.png",
     moveImage: "assets/Zaozao_Move.png",
     timeBonus: 0,
-    areaCollect: true,
-  },
+    areaCollect: true
+  }
 };
 
 /** @type {CatCakeKitchen.Cake[]} */
 const cakes = [
-  { name: "Strawberry Shortcake", image: "assets/Strawberry_Shortcake_transparent.png", ingredients: ["strawberry", "cake flour", "egg", "whipping cream", "sugar"] },
-  { name: "Chocolate Hazelnut Cake", image: "assets/ChocolateHazelnutCake_transparent.png", ingredients: ["chocolate", "hazelnut", "cake flour", "egg", "cream"] },
-  { name: "Shine Muscat Grape Tart", image: "assets/ShineMuscatGrapeTart_transparent.png", ingredients: ["shine muscat grape", "tart shell", "custard cream", "butter", "sugar"] },
-  { name: "White Peach Shortcake", image: "assets/WhitePeachShortcake_transparent.png", ingredients: ["white peach", "cake flour", "egg", "whipping cream", "sugar"] },
-  { name: "Matcha Red Bean Cake", image: "assets/MatchaRedBeanCake_transparent.png", ingredients: ["matcha powder", "red bean", "cake flour", "egg", "whipping cream"] },
-  { name: "Blueberry Yogurt Cake", image: "assets/BlueberryYogurtCake_transparent.png", ingredients: ["blueberry", "yogurt", "cake flour", "egg", "sugar"] },
-  { name: "Lemon Cheesecake", image: "assets/LemonCheesecake_transparent.png", ingredients: ["lemon", "cream cheese", "biscuit base", "butter", "sugar"] },
-  { name: "Chestnut Mont Blanc", image: "assets/ChestnutMontBlanc_transparent.png", ingredients: ["chestnut puree", "whipping cream", "sponge cake", "butter", "powdered sugar"] },
-  { name: "Fig Honey Mille Crepe", image: "assets/FigHoneyMilleCrepe_transparent.png", ingredients: ["fig", "honey", "crepe layer", "whipping cream", "butter"] },
-  { name: "Guava Grape Mousse Cake", image: "assets/GuavaGrapeMousseCake_transparent.png", ingredients: ["guava", "shine muscat grape", "mousse cream", "gelatin", "sponge cake"] },
-  { name: "Raspberry Chocolate Cake", image: "assets/RaspberryChocolateCake_transparent.png", ingredients: ["raspberry", "chocolate", "cake flour", "egg", "cream"] },
-  { name: "Caramel Nut Cake", image: "assets/CaramelNutCake_transparent.png", ingredients: ["caramel sauce", "almond", "walnut", "cake flour", "cream"] },
+  {
+    name: "Strawberry Shortcake",
+    image: "assets/Strawberry_Shortcake_transparent.png",
+    ingredients: [
+      "strawberry",
+      "cake flour",
+      "egg",
+      "whipping cream",
+      "sugar"
+    ]
+  },
+  {
+    name: "Chocolate Hazelnut Cake",
+    image: "assets/ChocolateHazelnutCake_transparent.png",
+    ingredients: ["chocolate", "hazelnut", "cake flour", "egg", "cream"]
+  },
+  {
+    name: "Shine Muscat Grape Tart",
+    image: "assets/ShineMuscatGrapeTart_transparent.png",
+    ingredients: [
+      "shine muscat grape",
+      "tart shell",
+      "custard cream",
+      "butter",
+      "sugar"
+    ]
+  },
+  {
+    name: "White Peach Shortcake",
+    image: "assets/WhitePeachShortcake_transparent.png",
+    ingredients: [
+      "white peach",
+      "cake flour",
+      "egg",
+      "whipping cream",
+      "sugar"
+    ]
+  },
+  {
+    name: "Matcha Red Bean Cake",
+    image: "assets/MatchaRedBeanCake_transparent.png",
+    ingredients: [
+      "matcha powder",
+      "red bean",
+      "cake flour",
+      "egg",
+      "whipping cream"
+    ]
+  },
+  {
+    name: "Blueberry Yogurt Cake",
+    image: "assets/BlueberryYogurtCake_transparent.png",
+    ingredients: ["blueberry", "yogurt", "cake flour", "egg", "sugar"]
+  },
+  {
+    name: "Lemon Cheesecake",
+    image: "assets/LemonCheesecake_transparent.png",
+    ingredients: ["lemon", "cream cheese", "biscuit base", "butter", "sugar"]
+  },
+  {
+    name: "Chestnut Mont Blanc",
+    image: "assets/ChestnutMontBlanc_transparent.png",
+    ingredients: [
+      "chestnut puree",
+      "whipping cream",
+      "sponge cake",
+      "butter",
+      "powdered sugar"
+    ]
+  },
+  {
+    name: "Fig Honey Mille Crepe",
+    image: "assets/FigHoneyMilleCrepe_transparent.png",
+    ingredients: ["fig", "honey", "crepe layer", "whipping cream", "butter"]
+  },
+  {
+    name: "Guava Grape Mousse Cake",
+    image: "assets/GuavaGrapeMousseCake_transparent.png",
+    ingredients: [
+      "guava",
+      "shine muscat grape",
+      "mousse cream",
+      "gelatin",
+      "sponge cake"
+    ]
+  },
+  {
+    name: "Raspberry Chocolate Cake",
+    image: "assets/RaspberryChocolateCake_transparent.png",
+    ingredients: ["raspberry", "chocolate", "cake flour", "egg", "cream"]
+  },
+  {
+    name: "Caramel Nut Cake",
+    image: "assets/CaramelNutCake_transparent.png",
+    ingredients: ["caramel sauce", "almond", "walnut", "cake flour", "cream"]
+  }
 ];
 
 /** @type {Object.<string, string>} */
@@ -236,7 +320,7 @@ const ingredientIcons = {
   raspberry: "🍇",
   "caramel sauce": "🍮",
   almond: "🥜",
-  walnut: "🌰",
+  walnut: "🌰"
 };
 
 /** @type {string[]} */
@@ -247,7 +331,7 @@ const obstacleImages = [
   "assets/obstacles_counter.png",
   "assets/obstacles_Oven.png",
   "assets/obstacles_PrepTable.png",
-  "assets/obstacles_Table.png",
+  "assets/obstacles_Table.png"
 ];
 
 const els = {
@@ -272,7 +356,7 @@ const els = {
   levelHint: document.querySelector("#levelHint"),
   changeChefTop: document.querySelector("#changeChefTop"),
   soundToggle: document.querySelector("#soundToggle"),
-  backgroundMusic: document.querySelector("#backgroundMusic"),
+  backgroundMusic: document.querySelector("#backgroundMusic")
 };
 
 /** @type {CatCakeKitchen.GameState} */
@@ -289,7 +373,7 @@ const state = {
   timeLeft: 100,
   timerId: null,
   soundOn: false,
-  started: false,
+  started: false
 };
 
 document.querySelectorAll(".chef-option").forEach((button) => {
@@ -304,7 +388,13 @@ els.changeChefTop.addEventListener("click", () => {
 els.soundToggle.addEventListener("click", toggleSound);
 
 window.addEventListener("keydown", (event) => {
-  if (!state.started || els.resultModal.classList.contains("is-open") || els.chefModal.classList.contains("is-open")) return;
+  if (
+    !state.started ||
+    els.resultModal.classList.contains("is-open") ||
+    els.chefModal.classList.contains("is-open")
+  ) {
+    return;
+  }
 
   const moves = {
     ArrowUp: [-1, 0],
@@ -318,7 +408,7 @@ window.addEventListener("keydown", (event) => {
     A: [0, -1],
     ArrowRight: [0, 1],
     d: [0, 1],
-    D: [0, 1],
+    D: [0, 1]
   };
 
   const move = moves[event.key];
@@ -357,7 +447,9 @@ function updateSoundButton() {
     "aria-label",
     state.soundOn ? "Turn background music off" : "Turn background music on"
   );
-  els.soundToggle.querySelector("span").textContent = state.soundOn ? "🔊" : "🔇";
+  els.soundToggle.querySelector("span").textContent = (
+    state.soundOn ? "🔊" : "🔇"
+  );
 }
 
 /**
@@ -383,7 +475,9 @@ function startLevel(levelIndex) {
   state.currentCakeIndex = 0;
   state.started = true;
   state.cakeQueue = buildCakeQueue(levels[levelIndex]);
-  state.timeLeft = levels[levelIndex].timeLimit + chefs[state.chefKey].timeBonus;
+  state.timeLeft = (
+    levels[levelIndex].timeLimit + chefs[state.chefKey].timeBonus
+  );
   els.resultModal.classList.remove("is-open");
   prepareCake({ resetCat: true });
   render();
@@ -402,7 +496,7 @@ function buildCakeQueue(level) {
 /**
  * Prepares the board for the current cake order.
  * @param {Object} [options] - Setup options.
- * @param {boolean} [options.resetCat=false] - Whether to move the cat back to the start.
+ * @param {boolean} [options.resetCat=false] - Whether to reset the cat.
  * @returns {void}
  */
 function prepareCake({ resetCat = false } = {}) {
@@ -478,7 +572,7 @@ function placeIngredients(level, blocked) {
 function randomSpot(level) {
   return {
     row: Math.floor(Math.random() * level.n),
-    col: Math.floor(Math.random() * level.n),
+    col: Math.floor(Math.random() * level.n)
   };
 }
 
@@ -489,7 +583,9 @@ function randomSpot(level) {
  */
 function canReachAllIngredients(level) {
   const reachable = getReachableTiles(level);
-  return Array.from(state.ingredientsOnGrid.keys()).every((key) => reachable.has(key));
+  return Array.from(state.ingredientsOnGrid.keys()).every(
+    (key) => reachable.has(key)
+  );
 }
 
 /**
@@ -508,7 +604,7 @@ function getReachableTiles(level) {
       { row: spot.row - 1, col: spot.col },
       { row: spot.row + 1, col: spot.col },
       { row: spot.row, col: spot.col - 1 },
-      { row: spot.row, col: spot.col + 1 },
+      { row: spot.row, col: spot.col + 1 }
     ].forEach((next) => {
       if (!isInsideGrid(next, level)) return;
       const key = keyFor(next.row, next.col);
@@ -528,7 +624,12 @@ function getReachableTiles(level) {
  * @returns {boolean} True when the position is inside the board.
  */
 function isInsideGrid(spot, level) {
-  return spot.row >= 0 && spot.col >= 0 && spot.row < level.n && spot.col < level.n;
+  return (
+    spot.row >= 0 &&
+    spot.col >= 0 &&
+    spot.row < level.n &&
+    spot.col < level.n
+  );
 }
 
 /**
@@ -549,7 +650,7 @@ function moveCat(rowDelta, colDelta) {
 }
 
 /**
- * Collects ingredients at the cat's position, including nearby cells for Zaozao.
+ * Collects ingredients at the cat's position.
  * @returns {void}
  */
 function collectAtCat() {
@@ -572,13 +673,16 @@ function collectAtCat() {
     state.ingredientsOnGrid.delete(key);
   });
 
-  if (getCurrentCake().ingredients.every((ingredient) => state.collected.has(ingredient))) {
+  const cakeIsComplete = getCurrentCake().ingredients.every(
+    (ingredient) => state.collected.has(ingredient)
+  );
+  if (cakeIsComplete) {
     completeCake();
   }
 }
 
 /**
- * Advances to the next cake order, or wins the level if all orders are complete.
+ * Advances to the next cake order, or wins the level.
  * @returns {void}
  */
 function completeCake() {
@@ -611,8 +715,8 @@ function winLevel() {
       message: `You are the Master Cat Chef! Final rating: ${stars}`,
       actions: [
         { label: "Play Again", onClick: () => startLevel(0) },
-        { label: "Change Chef", secondary: true, onClick: openChefAndReset },
-      ],
+        { label: "Change Chef", secondary: true, onClick: openChefAndReset }
+      ]
     });
     return;
   }
@@ -620,11 +724,13 @@ function winLevel() {
   showResult({
     badge: "🍰",
     title: "Success! Level Up!",
-    message: `Level ${levels[state.levelIndex].level} complete. Rating: ${stars}`,
+    message: (
+      `Level ${levels[state.levelIndex].level} complete. Rating: ${stars}`
+    ),
     actions: [
       { label: "Next Level", onClick: () => startLevel(state.levelIndex + 1) },
-      { label: "Change Chef", secondary: true, onClick: openChefForNextLevel },
-    ],
+      { label: "Change Chef", secondary: true, onClick: openChefForNextLevel }
+    ]
   });
 }
 
@@ -641,8 +747,8 @@ function failLevel() {
     actions: [
       { label: "Retry Level", onClick: () => startLevel(state.levelIndex) },
       { label: "Change Chef", secondary: true, onClick: openChefForRetry },
-      { label: "Back to Start", secondary: true, onClick: openChefAndReset },
-    ],
+      { label: "Back to Start", secondary: true, onClick: openChefAndReset }
+    ]
   });
 }
 
@@ -652,7 +758,7 @@ function failLevel() {
  * @param {string} result.badge - Emoji or short badge shown at the top.
  * @param {string} result.title - Modal title.
  * @param {string} result.message - Modal body message.
- * @param {CatCakeKitchen.ResultAction[]} result.actions - Buttons shown in the modal.
+ * @param {CatCakeKitchen.ResultAction[]} result.actions - Modal buttons.
  * @returns {void}
  */
 function showResult({ badge, title, message, actions }) {
@@ -781,7 +887,11 @@ function render() {
   }
 
   els.levelText.textContent = level.level;
-  els.cakesText.textContent = `${Math.min(state.currentCakeIndex, state.cakeQueue.length)} / ${level.cakesRequired}`;
+  const cakesFinished = Math.min(
+    state.currentCakeIndex,
+    state.cakeQueue.length
+  );
+  els.cakesText.textContent = `${cakesFinished} / ${level.cakesRequired}`;
   els.levelName.textContent = level.name;
   els.levelHint.textContent = level.level === 1
     ? "Use WASD or arrow keys to move your cat chef."
@@ -820,7 +930,13 @@ function renderChecklist(currentCake) {
   currentCake.ingredients.forEach((ingredient) => {
     const item = document.createElement("li");
     if (state.collected.has(ingredient)) item.classList.add("done");
-    item.innerHTML = `<span aria-hidden="true">${ingredientIcons[ingredient] || "🥣"}</span><span>${titleCase(ingredient)}</span><span>${state.collected.has(ingredient) ? "✓" : "☐"}</span>`;
+    const icon = ingredientIcons[ingredient] || "🥣";
+    const marker = state.collected.has(ingredient) ? "✓" : "☐";
+    item.innerHTML = [
+      `<span aria-hidden="true">${icon}</span>`,
+      `<span>${titleCase(ingredient)}</span>`,
+      `<span>${marker}</span>`
+    ].join("");
     els.ingredientChecklist.append(item);
   });
 }
@@ -850,7 +966,10 @@ function updateChefPanel() {
  */
 function updateTime() {
   els.timeText.textContent = `${Math.max(0, state.timeLeft)}s`;
-  els.timeText.classList.toggle("time-low", state.timeLeft <= 10 && state.started);
+  els.timeText.classList.toggle(
+    "time-low",
+    state.timeLeft <= 10 && state.started
+  );
   els.starsText.textContent = calculateStars();
 }
 
@@ -869,7 +988,11 @@ function calculateStars() {
  * @returns {CatCakeKitchen.Cake} Current cake.
  */
 function getCurrentCake() {
-  return state.cakeQueue[state.currentCakeIndex] || state.cakeQueue[state.cakeQueue.length - 1] || cakes[0];
+  return (
+    state.cakeQueue[state.currentCakeIndex] ||
+    state.cakeQueue[state.cakeQueue.length - 1] ||
+    cakes[0]
+  );
 }
 
 /**
@@ -878,7 +1001,9 @@ function getCurrentCake() {
  * @returns {boolean} True when the cake is complete.
  */
 function isCakeDone(cake) {
-  return cake.ingredients.every((ingredient) => state.collected.has(ingredient));
+  return cake.ingredients.every(
+    (ingredient) => state.collected.has(ingredient)
+  );
 }
 
 /**
