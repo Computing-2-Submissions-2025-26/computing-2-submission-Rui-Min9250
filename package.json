@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.0.0",
   "description": "",
-  "main": "web-app/Module.js",
+  "main": "web-app/CatCakeKitchen.js",
   "scripts": {
     "test": "mocha",
     "docs": "jsdoc -c jsdoc.json"

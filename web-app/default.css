@@ -87,7 +87,8 @@ h1 {
 
 .icon-button,
 .icon-text-button,
-.modal-actions button {
+.modal-actions button,
+.primary-action {
   border: 0;
   border-radius: 8px;
   background: var(--ink);
@@ -441,6 +442,50 @@ kbd {
   font-family: "Baloo 2", system-ui, sans-serif;
   font-size: 2.25rem;
   line-height: 1;
+}
+
+.rules-modal {
+  max-width: 620px;
+  text-align: left;
+}
+
+.rules-modal .eyebrow,
+.rules-modal h2 {
+  text-align: center;
+}
+
+.rules-list {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.rules-list li {
+  display: grid;
+  gap: 3px;
+  border: 1px solid rgba(240, 100, 141, 0.18);
+  border-radius: 8px;
+  background: white;
+  padding: 12px;
+}
+
+.rules-list strong {
+  color: #c74369;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 1.08rem;
+}
+
+.rules-list span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.primary-action {
+  display: block;
+  min-width: 150px;
+  margin: 0 auto;
 }
 
 .chef-options {

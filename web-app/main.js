@@ -1,4 +1,4 @@
-import CatCakeKitchenModule from "./Module.js";
+import CatCakeKitchenModule from "./CatCakeKitchen.js";
 
 /**
  * Cat Cake Kitchen game module.
@@ -336,6 +336,8 @@ const obstacleImages = [
 
 const els = {
   grid: document.querySelector("#kitchenGrid"),
+  rulesModal: document.querySelector("#rulesModal"),
+  rulesConfirm: document.querySelector("#rulesConfirm"),
   chefModal: document.querySelector("#chefModal"),
   resultModal: document.querySelector("#resultModal"),
   resultTitle: document.querySelector("#resultTitle"),
@@ -376,20 +378,29 @@ const state = {
   started: false
 };
 
-document.querySelectorAll(".chef-option").forEach((button) => {
-  button.addEventListener("click", () => chooseChef(button.dataset.chef));
+document.querySelectorAll(".chef-option").forEach(function (button) {
+  button.addEventListener("click", function () {
+    chooseChef(button.dataset.chef);
+  });
 });
 
-els.changeChefTop.addEventListener("click", () => {
+els.rulesConfirm.addEventListener("click", function () {
+  els.rulesModal.classList.remove("is-open");
+  els.chefModal.classList.add("is-open");
+});
+
+els.changeChefTop.addEventListener("click", function () {
   pauseTimer();
+  els.rulesModal.classList.remove("is-open");
   els.chefModal.classList.add("is-open");
 });
 
 els.soundToggle.addEventListener("click", toggleSound);
 
-window.addEventListener("keydown", (event) => {
+window.addEventListener("keydown", function (event) {
   if (
     !state.started ||
+    els.rulesModal.classList.contains("is-open") ||
     els.resultModal.classList.contains("is-open") ||
     els.chefModal.classList.contains("is-open")
   ) {
@@ -412,7 +423,9 @@ window.addEventListener("keydown", (event) => {
   };
 
   const move = moves[event.key];
-  if (!move) return;
+  if (!move) {
+    return;
+  }
   event.preventDefault();
   moveCat(move[0], move[1]);
 });
@@ -431,7 +444,7 @@ function toggleSound() {
   }
 
   els.backgroundMusic.volume = 0.45;
-  els.backgroundMusic.play().catch(() => {
+  els.backgroundMusic.play().catch(function () {
     state.soundOn = false;
     updateSoundButton();
   });
@@ -507,7 +520,7 @@ function prepareCake({ resetCat = false } = {}) {
     state.cat = { row: 0, col: 0 };
   }
 
-  let attempts = 0;
+  var attempts = 0;
   do {
     state.ingredientsOnGrid = new Map();
     state.obstacles = new Map();
@@ -533,11 +546,13 @@ function prepareCake({ resetCat = false } = {}) {
  * @returns {void}
  */
 function placeObstacles(level, blocked) {
-  let placed = 0;
+  var placed = 0;
   while (placed < level.obstacles) {
     const spot = randomSpot(level);
     const key = keyFor(spot.row, spot.col);
-    if (blocked.has(key)) continue;
+    if (blocked.has(key)) {
+      continue;
+    }
     blocked.add(key);
     state.obstacles.set(key, obstacleImages[placed % obstacleImages.length]);
     placed += 1;
@@ -552,9 +567,9 @@ function placeObstacles(level, blocked) {
  */
 function placeIngredients(level, blocked) {
   const currentCake = getCurrentCake();
-  currentCake.ingredients.forEach((ingredient) => {
-    let spot = randomSpot(level);
-    let key = keyFor(spot.row, spot.col);
+  currentCake.ingredients.forEach(function (ingredient) {
+    var spot = randomSpot(level);
+    var key = keyFor(spot.row, spot.col);
     while (blocked.has(key)) {
       spot = randomSpot(level);
       key = keyFor(spot.row, spot.col);
@@ -584,7 +599,9 @@ function randomSpot(level) {
 function canReachAllIngredients(level) {
   const reachable = getReachableTiles(level);
   return Array.from(state.ingredientsOnGrid.keys()).every(
-    (key) => reachable.has(key)
+    function (key) {
+      return reachable.has(key);
+    }
   );
 }
 
@@ -596,22 +613,34 @@ function canReachAllIngredients(level) {
 function getReachableTiles(level) {
   const startKey = keyFor(state.cat.row, state.cat.col);
   const reachable = new Set([startKey]);
-  const queue = [{ ...state.cat }];
+  const queue = [{
+    row: state.cat.row,
+    col: state.cat.col
+  }];
 
   while (queue.length > 0) {
     const spot = queue.shift();
-    [
+    const neighbours = [
       { row: spot.row - 1, col: spot.col },
       { row: spot.row + 1, col: spot.col },
       { row: spot.row, col: spot.col - 1 },
       { row: spot.row, col: spot.col + 1 }
-    ].forEach((next) => {
-      if (!isInsideGrid(next, level)) return;
-      const key = keyFor(next.row, next.col);
-      if (reachable.has(key) || state.obstacles.has(key)) return;
-      reachable.add(key);
-      queue.push(next);
-    });
+    ];
+    var index;
+    var next;
+    var key;
+    for (index = 0; index < neighbours.length; index += 1) {
+      next = neighbours[index];
+      key = keyFor(next.row, next.col);
+      if (
+        isInsideGrid(next, level) &&
+        !reachable.has(key) &&
+        !state.obstacles.has(key)
+      ) {
+        reachable.add(key);
+        queue.push(next);
+      }
+    }
   }
 
   return reachable;
@@ -641,8 +670,12 @@ function isInsideGrid(spot, level) {
 function moveCat(rowDelta, colDelta) {
   const level = levels[state.levelIndex];
   const next = { row: state.cat.row + rowDelta, col: state.cat.col + colDelta };
-  if (!isInsideGrid(next, level)) return;
-  if (state.obstacles.has(keyFor(next.row, next.col))) return;
+  if (!isInsideGrid(next, level)) {
+    return;
+  }
+  if (state.obstacles.has(keyFor(next.row, next.col))) {
+    return;
+  }
 
   state.cat = next;
   collectAtCat();
@@ -655,26 +688,35 @@ function moveCat(rowDelta, colDelta) {
  */
 function collectAtCat() {
   const chef = chefs[state.chefKey];
-  const spots = [{ ...state.cat }];
+  const spots = [{
+    row: state.cat.row,
+    col: state.cat.col
+  }];
 
   if (chef.areaCollect) {
-    for (let row = state.cat.row - 1; row <= state.cat.row + 1; row += 1) {
-      for (let col = state.cat.col - 1; col <= state.cat.col + 1; col += 1) {
-        spots.push({ row, col });
+    var row;
+    var col;
+    for (row = state.cat.row - 1; row <= state.cat.row + 1; row += 1) {
+      for (col = state.cat.col - 1; col <= state.cat.col + 1; col += 1) {
+        spots.push({ row: row, col: col });
       }
     }
   }
 
-  spots.forEach((spot) => {
+  spots.forEach(function (spot) {
     const key = keyFor(spot.row, spot.col);
     const ingredient = state.ingredientsOnGrid.get(key);
-    if (!ingredient) return;
+    if (!ingredient) {
+      return;
+    }
     state.collected.add(ingredient);
     state.ingredientsOnGrid.delete(key);
   });
 
   const cakeIsComplete = getCurrentCake().ingredients.every(
-    (ingredient) => state.collected.has(ingredient)
+    function (ingredient) {
+      return state.collected.has(ingredient);
+    }
   );
   if (cakeIsComplete) {
     completeCake();
@@ -692,7 +734,7 @@ function completeCake() {
     return;
   }
 
-  setTimeout(() => {
+  setTimeout(function () {
     prepareCake();
     render();
   }, 250);
@@ -714,7 +756,12 @@ function winLevel() {
       title: "Congratulations!",
       message: `You are the Master Cat Chef! Final rating: ${stars}`,
       actions: [
-        { label: "Play Again", onClick: () => startLevel(0) },
+        {
+          label: "Play Again",
+          onClick: function () {
+            startLevel(0);
+          }
+        },
         { label: "Change Chef", secondary: true, onClick: openChefAndReset }
       ]
     });
@@ -728,7 +775,12 @@ function winLevel() {
       `Level ${levels[state.levelIndex].level} complete. Rating: ${stars}`
     ),
     actions: [
-      { label: "Next Level", onClick: () => startLevel(state.levelIndex + 1) },
+      {
+        label: "Next Level",
+        onClick: function () {
+          startLevel(state.levelIndex + 1);
+        }
+      },
       { label: "Change Chef", secondary: true, onClick: openChefForNextLevel }
     ]
   });
@@ -745,7 +797,12 @@ function failLevel() {
     title: "Fail!",
     message: "The cake order ran out of time.",
     actions: [
-      { label: "Retry Level", onClick: () => startLevel(state.levelIndex) },
+      {
+        label: "Retry Level",
+        onClick: function () {
+          startLevel(state.levelIndex);
+        }
+      },
       { label: "Change Chef", secondary: true, onClick: openChefForRetry },
       { label: "Back to Start", secondary: true, onClick: openChefAndReset }
     ]
@@ -766,12 +823,14 @@ function showResult({ badge, title, message, actions }) {
   els.resultTitle.textContent = title;
   els.resultMessage.textContent = message;
   els.resultActions.innerHTML = "";
-  actions.forEach((action) => {
+  actions.forEach(function (action) {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = action.label;
-    if (action.secondary) button.classList.add("secondary");
-    button.addEventListener("click", () => {
+    if (action.secondary) {
+      button.classList.add("secondary");
+    }
+    button.addEventListener("click", function () {
       els.resultModal.classList.remove("is-open");
       action.onClick();
     });
@@ -814,10 +873,12 @@ function openChefAndReset() {
  */
 function startTimer() {
   updateTime();
-  state.timerId = window.setInterval(() => {
+  state.timerId = window.setInterval(function () {
     state.timeLeft -= 1;
     updateTime();
-    if (state.timeLeft <= 0) failLevel();
+    if (state.timeLeft <= 0) {
+      failLevel();
+    }
   }, 1000);
 }
 
@@ -845,8 +906,10 @@ function render() {
   els.grid.style.gridTemplateRows = `repeat(${level.n}, minmax(0, 1fr))`;
   els.grid.innerHTML = "";
 
-  for (let row = 0; row < level.n; row += 1) {
-    for (let col = 0; col < level.n; col += 1) {
+  var row;
+  var col;
+  for (row = 0; row < level.n; row += 1) {
+    for (col = 0; col < level.n; col += 1) {
       const tile = document.createElement("div");
       const key = keyFor(row, col);
       tile.className = "tile";
@@ -912,7 +975,9 @@ function render() {
  */
 function renderCakeIcon(currentCake) {
   els.cakeIcon.innerHTML = "";
-  if (!currentCake) return;
+  if (!currentCake) {
+    return;
+  }
   const image = document.createElement("img");
   image.src = currentCake.image;
   image.alt = currentCake.name;
@@ -926,10 +991,14 @@ function renderCakeIcon(currentCake) {
  */
 function renderChecklist(currentCake) {
   els.ingredientChecklist.innerHTML = "";
-  if (!currentCake) return;
-  currentCake.ingredients.forEach((ingredient) => {
+  if (!currentCake) {
+    return;
+  }
+  currentCake.ingredients.forEach(function (ingredient) {
     const item = document.createElement("li");
-    if (state.collected.has(ingredient)) item.classList.add("done");
+    if (state.collected.has(ingredient)) {
+      item.classList.add("done");
+    }
     const icon = ingredientIcons[ingredient] || "🥣";
     const marker = state.collected.has(ingredient) ? "✓" : "☐";
     item.innerHTML = [
@@ -1002,7 +1071,9 @@ function getCurrentCake() {
  */
 function isCakeDone(cake) {
   return cake.ingredients.every(
-    (ingredient) => state.collected.has(ingredient)
+    function (ingredient) {
+      return state.collected.has(ingredient);
+    }
   );
 }
 
@@ -1024,7 +1095,9 @@ function keyFor(row, col) {
 function titleCase(text) {
   return text
     .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(function (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
     .join(" ");
 }
 

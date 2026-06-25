@@ -20,10 +20,21 @@
           <h1>Cat Cake Kitchen</h1>
         </div>
         <div class="top-actions">
-          <button id="soundToggle" class="icon-button" type="button" aria-label="Turn background music on" aria-pressed="false">
+          <button
+            id="soundToggle"
+            class="icon-button"
+            type="button"
+            aria-label="Turn background music on"
+            aria-pressed="false"
+          >
             <span aria-hidden="true">🔇</span>
           </button>
-          <button id="changeChefTop" class="icon-text-button" type="button" aria-label="Change chef">
+          <button
+            id="changeChefTop"
+            class="icon-text-button"
+            type="button"
+            aria-label="Change chef"
+          >
             <span aria-hidden="true">🐾</span>
             Change Chef
           </button>
@@ -96,19 +107,77 @@
       </section>
     </main>
 
-    <div id="chefModal" class="modal-backdrop is-open" role="dialog" aria-modal="true" aria-labelledby="chefModalTitle">
+    <div
+      id="rulesModal"
+      class="modal-backdrop is-open"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="rulesModalTitle"
+    >
+      <section class="modal rules-modal">
+        <p class="eyebrow">How to Play</p>
+        <h2 id="rulesModalTitle">Welcome to Cat Cake Kitchen</h2>
+        <ul class="rules-list">
+          <li>
+            <strong>Collect ingredients</strong>
+            <span>
+              Move your cat chef around the grid to gather everything needed
+              for the current cake order.
+            </span>
+          </li>
+          <li>
+            <strong>Avoid obstacles</strong>
+            <span>
+              Kitchen furniture blocks movement, so plan your route carefully.
+            </span>
+          </li>
+          <li>
+            <strong>Use each chef’s skill</strong>
+            <span>
+              Heizi gives extra time. Zaozao collects nearby ingredients from
+              the surrounding tiles.
+            </span>
+          </li>
+          <li>
+            <strong>Finish before time runs out</strong>
+            <span>
+              Complete every cake order in the level to earn stars and move on.
+            </span>
+          </li>
+        </ul>
+        <button id="rulesConfirm" class="primary-action" type="button">
+          Got it
+        </button>
+      </section>
+    </div>
+
+    <div
+      id="chefModal"
+      class="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="chefModalTitle"
+    >
       <section class="modal chef-modal">
         <p class="eyebrow">Choose Today’s Chef</p>
         <h2 id="chefModalTitle">Pick your kitchen partner</h2>
         <div class="chef-options">
           <button class="chef-option" type="button" data-chef="heizi">
-            <img class="big-cat chef-photo" src="assets/heizi_IDphoto.png" alt="黑子 Heizi chef portrait" />
+            <img
+              class="big-cat chef-photo"
+              src="assets/heizi_IDphoto.png"
+              alt="黑子 Heizi chef portrait"
+            />
             <strong>黑子 Heizi</strong>
             <small>Time Bonus</small>
             <span>Adds 10 extra seconds to every level.</span>
           </button>
           <button class="chef-option" type="button" data-chef="zaozao">
-            <img class="big-cat chef-photo" src="assets/Zaozao_IDphoto.png" alt="早早 Zaozao chef portrait" />
+            <img
+              class="big-cat chef-photo"
+              src="assets/Zaozao_IDphoto.png"
+              alt="早早 Zaozao chef portrait"
+            />
             <strong>早早 Zaozao</strong>
             <small>Area Collect</small>
             <span>Collects needed ingredients from the surrounding 8 tiles.</span>
@@ -117,7 +186,13 @@
       </section>
     </div>
 
-    <div id="resultModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div
+      id="resultModal"
+      class="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="resultTitle"
+    >
       <section class="modal result-modal">
         <div id="resultBadge" class="result-badge" aria-hidden="true">🍰</div>
         <h2 id="resultTitle">Success! Level Up!</h2>
@@ -126,7 +201,12 @@
       </section>
     </div>
 
-    <audio id="backgroundMusic" src="assets/BackgroundMusic.mp3" loop preload="auto"></audio>
+    <audio
+      id="backgroundMusic"
+      src="assets/BackgroundMusic.mp3"
+      loop
+      preload="auto"
+    ></audio>
     <script type="module" src="main.js"></script>
   </body>
 </html>
