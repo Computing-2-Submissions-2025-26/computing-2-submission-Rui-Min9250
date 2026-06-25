@@ -1,13 +1,18 @@
 /**
  * Cat Cake Kitchen is a module to model the state and rules of a
- * turn-based kitchen grid collection game.
+ * turn-based, board-based kitchen collection game. The module stores no
+ * browser state; it only describes the game board, cat chef, cake orders,
+ * ingredients, obstacles, movement, collection, and win or loss conditions.
+ * This means a game can be simulated from the console or from unit tests
+ * without using the web page.
  * @namespace CatCakeKitchen
  * @author Rui Min
  */
 const CatCakeKitchen = Object.create(null);
 
 /**
- * A position on the kitchen grid.
+ * A position on the kitchen grid. Rows increase down the board and columns
+ * increase from left to right, matching how the board is drawn on screen.
  * @memberof CatCakeKitchen
  * @typedef {Object} Position
  * @property {number} row Row index in the grid.
@@ -15,7 +20,9 @@ const CatCakeKitchen = Object.create(null);
  */
 
 /**
- * A level configuration for one kitchen stage.
+ * A level configuration for one kitchen stage. A level decides the board
+ * size, the number of cake orders, how many ingredients each cake needs,
+ * how many kitchen obstacles are present, and how long the player has.
  * @memberof CatCakeKitchen
  * @typedef {Object} Level
  * @property {number} level Human-readable level number.
@@ -28,7 +35,9 @@ const CatCakeKitchen = Object.create(null);
  */
 
 /**
- * A cake recipe.
+ * A cake recipe that can appear as an order in a level. The recipe contains
+ * all possible ingredients, but a level may use only the first few depending
+ * on its difficulty.
  * @memberof CatCakeKitchen
  * @typedef {Object} Cake
  * @property {string} name Cake name shown to the player.
@@ -37,7 +46,8 @@ const CatCakeKitchen = Object.create(null);
  */
 
 /**
- * A playable cat chef.
+ * A playable cat chef. Different chefs can change the rules slightly, for
+ * example by adding time or collecting nearby ingredients.
  * @memberof CatCakeKitchen
  * @typedef {Object} Chef
  * @property {string} name Display name.
@@ -47,7 +57,9 @@ const CatCakeKitchen = Object.create(null);
  */
 
 /**
- * A complete game state that can be simulated without the web interface.
+ * A complete game state that can be simulated without the web interface. The
+ * web application should render and update from this state rather than hiding
+ * game rules inside DOM code.
  * @memberof CatCakeKitchen
  * @typedef {Object} GameState
  * @property {CatCakeKitchen.Level} level Current level configuration.
@@ -64,7 +76,8 @@ const CatCakeKitchen = Object.create(null);
  */
 
 /**
- * A direction the cat chef can move in one turn.
+ * A direction the cat chef can move in one turn. Each movement is one board
+ * step and one turn in the game.
  * @memberof CatCakeKitchen
  * @typedef {("up" | "down" | "left" | "right")} Direction
  */
@@ -96,6 +109,12 @@ const defaultCakes = Object.freeze([
     })
 ]);
 
+/**
+ * Copies a grid position so callers do not receive the original state object.
+ * @function
+ * @param {CatCakeKitchen.Position} position Position to copy.
+ * @returns {CatCakeKitchen.Position} A new object with the same row and column.
+ */
 const copyPosition = function (position) {
     return {
         row: position.row,
@@ -103,6 +122,14 @@ const copyPosition = function (position) {
     };
 };
 
+/**
+ * Returns the remaining turn count for a game state.
+ * Older UI state uses `timeLeft`, while the coursework API uses
+ * `turnsRemaining`; this helper lets both forms be handled consistently.
+ * @function
+ * @param {CatCakeKitchen.GameState} game Game state to inspect.
+ * @returns {number} The number of turns or seconds remaining.
+ */
 const turnsFor = function (game) {
     if (typeof game.turnsRemaining === "number") {
         return game.turnsRemaining;
@@ -110,6 +137,12 @@ const turnsFor = function (game) {
     return game.timeLeft;
 };
 
+/**
+ * Returns a copy of a game state with its status recalculated from the rules.
+ * @function
+ * @param {CatCakeKitchen.GameState} game Game state to update.
+ * @returns {CatCakeKitchen.GameState} A state whose status matches the rules.
+ */
 const withStatus = function (game) {
     return Object.assign({}, game, {
         status: CatCakeKitchen.get_game_status(game)
@@ -117,7 +150,9 @@ const withStatus = function (game) {
 };
 
 /**
- * Creates the initial game state for a selected level.
+ * Creates the initial game state for a selected level. The cat starts in the
+ * top-left corner, no ingredients have been collected, and the cake queue is
+ * generated from the level settings.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.Level} level Level to initialise.
@@ -145,39 +180,52 @@ CatCakeKitchen.create_game = function (level, chef, cakes) {
 };
 
 /**
- * Returns a board view for display or debugging.
- * Cells are described as empty, cat, obstacle, or ingredient.
+ * Returns a board view for display or debugging. Each cell is represented by
+ * an object whose type is `empty`, `cat`, `obstacle`, or `ingredient`.
+ * This is useful when code outside the module wants to inspect the board
+ * without reading the module's Maps and Sets directly.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
  * @returns {Object[][]} A square board view arranged in rows.
  */
 CatCakeKitchen.get_board = function (game) {
-    return Array.from({length: game.level.n}, function (_, row) {
-        return Array.from({length: game.level.n}, function (__, col) {
-            const key = CatCakeKitchen.keyFor(row, col);
+    const board = [];
+    var row = 0;
+    var col;
+    var cells;
+    var key;
+    while (row < game.level.n) {
+        cells = [];
+        col = 0;
+        while (col < game.level.n) {
+            key = CatCakeKitchen.keyFor(row, col);
             if (game.cat.row === row && game.cat.col === col) {
-                return {type: "cat"};
-            }
-            if (game.obstacles.has(key)) {
-                return {
+                cells.push({type: "cat"});
+            } else if (game.obstacles.has(key)) {
+                cells.push({
                     type: "obstacle",
                     value: game.obstacles.get(key)
-                };
-            }
-            if (game.ingredientsOnGrid.has(key)) {
-                return {
+                });
+            } else if (game.ingredientsOnGrid.has(key)) {
+                cells.push({
                     type: "ingredient",
                     value: game.ingredientsOnGrid.get(key)
-                };
+                });
+            } else {
+                cells.push({type: "empty"});
             }
-            return {type: "empty"};
-        });
-    });
+            col += 1;
+        }
+        board.push(cells);
+        row += 1;
+    }
+    return board;
 };
 
 /**
- * Returns the cat chef's current board position.
+ * Returns the cat chef's current board position. A copy is returned so the
+ * caller cannot accidentally mutate the game state.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -188,7 +236,8 @@ CatCakeKitchen.get_player_position = function (game) {
 };
 
 /**
- * Returns the current cake order.
+ * Returns the current cake order. If the current index is past the end of the
+ * queue, the final cake is returned as a safe fallback.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -202,7 +251,8 @@ CatCakeKitchen.get_current_order = function (game) {
 };
 
 /**
- * Returns the ingredients already collected for the current order.
+ * Returns the ingredients already collected for the current order as an array
+ * for display, testing, or console inspection.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -213,7 +263,9 @@ CatCakeKitchen.get_collected_ingredients = function (game) {
 };
 
 /**
- * Returns the ingredients still needed for the current order.
+ * Returns the ingredients still needed for the current order. The result is
+ * based on the current order's recipe and the set of ingredients already
+ * collected by the cat chef.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -227,7 +279,9 @@ CatCakeKitchen.get_remaining_ingredients = function (game) {
 };
 
 /**
- * Checks whether a board position contains an obstacle.
+ * Checks whether a board position contains a kitchen obstacle. Obstacles block
+ * movement, so a position with an obstacle is not a legal destination for the
+ * cat chef.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -242,7 +296,9 @@ CatCakeKitchen.is_obstacle = function (game, position) {
 };
 
 /**
- * Checks whether the cat can move one step in a direction.
+ * Checks whether the cat can move one step in a direction. A move is valid
+ * only when the game is still playing, the destination is inside the board,
+ * and the destination is not blocked by an obstacle.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -265,8 +321,9 @@ CatCakeKitchen.is_valid_move = function (game, direction) {
 };
 
 /**
- * Collects an ingredient if the cat is standing on one.
- * Nearby ingredients are also collected for chefs with area collect.
+ * Collects an ingredient if the cat is standing on one. Nearby ingredients
+ * are also collected for chefs with the area collect skill. The returned
+ * state has its status recalculated afterwards.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -277,8 +334,9 @@ CatCakeKitchen.collect_ingredient = function (game) {
 };
 
 /**
- * Moves the cat chef one step and collects any ingredient reached.
- * The original game state is not mutated.
+ * Makes one player turn by moving the cat chef one step and collecting any
+ * ingredient reached. The original game state is not mutated; a new state is
+ * returned after the turn counter has been reduced.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -300,7 +358,8 @@ CatCakeKitchen.move_player = function (game, direction) {
 };
 
 /**
- * Checks whether the current cake order is complete.
+ * Checks whether the current cake order is complete. An order is complete
+ * when every ingredient in that cake's recipe has been collected.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -314,7 +373,8 @@ CatCakeKitchen.is_order_complete = function (game) {
 };
 
 /**
- * Checks whether the game has been won.
+ * Checks whether the game has been won. For this module-level API, winning
+ * means the current cake order is complete.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -325,7 +385,8 @@ CatCakeKitchen.is_game_won = function (game) {
 };
 
 /**
- * Checks whether the game has been lost.
+ * Checks whether the game has been lost. A loss happens when there are no
+ * turns or seconds remaining before the current cake order is complete.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -336,7 +397,8 @@ CatCakeKitchen.is_game_lost = function (game) {
 };
 
 /**
- * Returns the current game status.
+ * Returns the current game status as one of `playing`, `won`, or `lost`.
+ * This combines the win and loss rules into a single value for the UI or tests.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -353,7 +415,8 @@ CatCakeKitchen.get_game_status = function (game) {
 };
 
 /**
- * Advances to the next level when the current level has been completed.
+ * Advances to the next level when the current level has been completed. If the
+ * current game has not been won, the same state is returned unchanged.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} game Current game state.
@@ -370,7 +433,8 @@ CatCakeKitchen.next_level = function (game, level, cakes) {
 
 
 /**
- * Converts a row and column into a stable key for Maps and Sets.
+ * Converts a row and column into a stable key for Maps and Sets. The game uses
+ * this string key to store obstacles and ingredients by board position.
  * @memberof CatCakeKitchen
  * @function
  * @param {number} row Row index.
@@ -382,7 +446,8 @@ CatCakeKitchen.keyFor = function (row, col) {
 };
 
 /**
- * Checks whether a position is inside a level's square grid.
+ * Checks whether a position is inside a level's square grid. Positions outside
+ * the board cannot contain ingredients and cannot be moved into.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.Position} position Position to check.
@@ -399,7 +464,9 @@ CatCakeKitchen.isInsideGrid = function (position, level) {
 };
 
 /**
- * Builds the queue of cake orders for a level.
+ * Builds the queue of cake orders for a level. The queue length comes from
+ * `cakesRequired`, and each cake is trimmed to the level's ingredient count
+ * so later levels can ask for more complex recipes.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.Cake[]} cakes Available cake recipes.
@@ -407,16 +474,23 @@ CatCakeKitchen.isInsideGrid = function (position, level) {
  * @returns {CatCakeKitchen.Cake[]} Cake orders for the level.
  */
 CatCakeKitchen.buildCakeQueue = function (cakes, level) {
-    return Array.from({length: level.cakesRequired}, function (_, index) {
-        const base = cakes[(level.level + index - 1) % cakes.length];
-        return Object.assign({}, base, {
+    const queue = [];
+    var index = 0;
+    var base;
+    while (index < level.cakesRequired) {
+        base = cakes[(level.level + index - 1) % cakes.length];
+        queue.push(Object.assign({}, base, {
             ingredients: base.ingredients.slice(0, level.ingredientsPerCake)
-        });
-    });
+        }));
+        index += 1;
+    }
+    return queue;
 };
 
 /**
- * Creates an initial state for a level.
+ * Creates an initial state for a level. This camelCase version is kept for
+ * compatibility with the web interface and tests; the coursework-style API
+ * wrapper is {@link CatCakeKitchen.create_game}.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.Level} level Level to initialise.
@@ -439,7 +513,9 @@ CatCakeKitchen.createGame = function (level, chef, cakes) {
 };
 
 /**
- * Returns every grid key the cat can reach without crossing obstacles.
+ * Returns every grid key the cat can reach without crossing obstacles. This
+ * uses a flood-fill search from the cat's current position, so it can detect
+ * whether an ingredient has accidentally been placed behind a wall.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} state Current game state.
@@ -452,6 +528,9 @@ CatCakeKitchen.getReachableTiles = function (state) {
         row: state.cat.row,
         col: state.cat.col
     }];
+    var index;
+    var next;
+    var key;
 
     while (queue.length > 0) {
         const position = queue.shift();
@@ -461,10 +540,8 @@ CatCakeKitchen.getReachableTiles = function (state) {
             {row: position.row, col: position.col - 1},
             {row: position.row, col: position.col + 1}
         ];
-        var index;
-        var next;
-        var key;
-        for (index = 0; index < neighbours.length; index += 1) {
+        index = 0;
+        while (index < neighbours.length) {
             next = neighbours[index];
             key = CatCakeKitchen.keyFor(next.row, next.col);
             if (
@@ -475,6 +552,7 @@ CatCakeKitchen.getReachableTiles = function (state) {
                 reachable.add(key);
                 queue.push(next);
             }
+            index += 1;
         }
     }
 
@@ -482,7 +560,9 @@ CatCakeKitchen.getReachableTiles = function (state) {
 };
 
 /**
- * Checks whether all placed ingredients are reachable by the cat.
+ * Checks whether all placed ingredients are reachable by the cat. This is used
+ * to avoid unfair boards where obstacles make an ingredient impossible to
+ * collect.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} state Current game state.
@@ -499,8 +579,8 @@ CatCakeKitchen.canReachAllIngredients = function (state) {
 
 /**
  * Moves the cat by one step if the target cell is inside the grid and not
- * blocked. This function is pure: it returns a new state and does not mutate
- * the old one.
+ * blocked. If the move is illegal, the original state is returned. This
+ * function is pure: it returns a new state and does not mutate the old one.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} state Current game state.
@@ -525,9 +605,10 @@ CatCakeKitchen.moveCat = function (state, rowDelta, colDelta) {
 };
 
 /**
- * Collects ingredients from the cat's cell, and optionally the surrounding
- * cells. This function is pure: it returns a new state and does not mutate the
- * old one.
+ * Collects ingredients from the cat's cell, and optionally from the surrounding
+ * eight cells when the selected chef has area collect. Collected ingredients
+ * are removed from the board. This function is pure: it returns a new state
+ * and does not mutate the old one.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.GameState} state Current game state.
@@ -540,21 +621,21 @@ CatCakeKitchen.collectIngredients = function (state) {
         row: state.cat.row,
         col: state.cat.col
     }];
+    var row;
+    var col;
 
     if (state.chef.areaCollect) {
-        var row;
-        var col;
-        for (row = state.cat.row - 1; row <= state.cat.row + 1; row += 1) {
-            for (
-                col = state.cat.col - 1;
-                col <= state.cat.col + 1;
-                col += 1
-            ) {
+        row = state.cat.row - 1;
+        while (row <= state.cat.row + 1) {
+            col = state.cat.col - 1;
+            while (col <= state.cat.col + 1) {
                 spots.push({
                     row: row,
                     col: col
                 });
+                col += 1;
             }
+            row += 1;
         }
     }
 
@@ -575,7 +656,9 @@ CatCakeKitchen.collectIngredients = function (state) {
 };
 
 /**
- * Checks whether all ingredients for a cake have been collected.
+ * Checks whether all ingredients for a cake have been collected. This function
+ * only looks at the recipe and collected ingredient set, which makes it easy
+ * to test independently from the full game state.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.Cake} cake Cake order to check.
@@ -589,7 +672,8 @@ CatCakeKitchen.isCakeComplete = function (cake, collected) {
 };
 
 /**
- * Calculates the star rating from remaining time.
+ * Calculates the star rating from remaining time. More remaining time gives a
+ * higher rating, while running out of time gives no stars.
  * @memberof CatCakeKitchen
  * @function
  * @param {CatCakeKitchen.Level} level Current level.
